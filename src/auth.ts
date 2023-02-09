@@ -32,14 +32,14 @@ export class Auth {
       const accessContext = await this.oauth.getAccessToken();
       if (accessContext) await this.authenticate();
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
     if (!this.me) {
       try {
         const hasAuthCode = await this.oauth.isReturningFromAuthServer();
         if (hasAuthCode) await this.authenticate();
       } catch (err) {
-        console.error(err);
+        console.log(err);
       }
     }
   }

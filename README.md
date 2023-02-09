@@ -1,6 +1,6 @@
 # Lishogi OAuth app demo
 
-This is an example for a fully client side OAuth app that uses various APIs.
+This is an example for a fully client side OAuth app that uses various APIs. Default set to local instance of lishogi (`lishogiHost`).
 
 ## Features
 
@@ -10,8 +10,6 @@ This is an example for a fully client side OAuth app that uses various APIs.
 - Play games
 - Challenge the AI opponent
 - Challenge a player
-- Create a game seek
-- Watch Lishogi TV
 
 ## Run it on your machine
 
@@ -25,8 +23,6 @@ This is an example for a fully client side OAuth app that uses various APIs.
 - [OAuth "Login with Lishogi"](https://github.com/WandererXII/api-demo/blob/master/src/auth.ts)
 - [Read the main event stream](https://github.com/WandererXII/api-demo/blob/master/src/ctrl.ts)
 - [Game play](https://github.com/WandererXII/api-demo/blob/master/src/game.ts)
-- [Create a seek and await a game](https://github.com/WandererXII/api-demo/blob/master/src/seek.ts)
 - [Challenge a player](https://github.com/WandererXII/api-demo/blob/master/src/challenge.ts)
-- [Watch Lishogi TV](https://github.com/WandererXII/api-demo/blob/master/src/tv.ts)
 
 Feel free to reuse and learn from this code when building your own Lishogi API app.
