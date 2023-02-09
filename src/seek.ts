@@ -19,7 +19,7 @@ export class SeekCtrl {
     const stream = await root.auth.openStream(
       '/api/board/seek',
       {
-        method: 'post',
+        method: 'POST',
         body: formData(config),
       },
       _ => {}

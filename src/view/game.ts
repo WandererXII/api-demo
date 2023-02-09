@@ -1,5 +1,5 @@
-import { Color } from 'chessground/types';
-import { opposite } from 'chessground/util';
+import { Color } from 'shogiground/types';
+import { opposite } from 'shogiground/util';
 import { h } from 'snabbdom';
 import { GameCtrl } from '../game';
 import { Renderer } from '../interfaces';
@@ -37,7 +37,7 @@ const renderButtons = (ctrl: GameCtrl) =>
           },
         },
       },
-      ctrl.chess.fullmoves > 1 ? 'Resign' : 'Abort'
+      ctrl.shogi.moveNumber > 1 ? 'Resign' : 'Abort'
     ),
   ]);
 
@@ -47,7 +47,7 @@ const renderGamePlayer = (ctrl: GameCtrl, color: Color) => {
   const p = ctrl.game[color];
   const clock = clockContent(
     ctrl.timeOf(color),
-    color == ctrl.chess.turn && ctrl.chess.fullmoves > 1 && ctrl.playing() ? ctrl.lastUpdateAt - Date.now() : 0
+    color == ctrl.shogi.turn && ctrl.shogi.moveNumber > 1 && ctrl.playing() ? ctrl.lastUpdateAt - Date.now() : 0
   );
   return renderPlayer(ctrl, color, clock, p.name, p.title, p.rating, p.aiLevel);
 };

@@ -1,5 +1,5 @@
 // ND-JSON response streamer
-// See https://lichess.org/api#section/Introduction/Streaming-with-ND-JSON
+// See https://lishogi.org/api#section/Introduction/Streaming-with-ND-JSON
 
 type Handler = (line: any) => void;
 

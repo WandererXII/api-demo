@@ -1,33 +1,34 @@
 import { Ctrl } from './ctrl';
 import { Game } from './interfaces';
-import { Api as CgApi } from 'chessground/api';
-import { Config as CgConfig } from 'chessground/config';
+import { Api as SgApi } from 'shogiground/api';
+import { Config as SgConfig, Config } from 'shogiground/config';
 import { Stream } from './ndJsonStream';
-import { Color, Key } from 'chessground/types';
-import { opposite, parseUci } from 'chessops/util';
-import { Chess, defaultSetup } from 'chessops';
-import { makeFen, parseFen } from 'chessops/fen';
-import { chessgroundDests } from 'chessops/compat';
+import { Color, Key, Piece } from 'shogiground/types';
+import { makeUsi, opposite, parseSquare, parseUsi } from 'shogiops/util';
+import { Shogi } from 'shogiops/variant/shogi';
+import { makeSfen, parseSfen, initialSfen } from 'shogiops/sfen';
+import { shogigroundMoveDests, shogigroundDropDests } from 'shogiops/compat';
+import { Role } from 'shogiops';
 
 export interface BoardCtrl {
-  chess: Chess;
-  ground?: CgApi;
-  chessgroundConfig: () => CgConfig;
-  setGround: (cg: CgApi) => void;
+  shogi: Shogi;
+  ground?: SgApi;
+  shogigroundConfig: () => SgConfig;
+  setGround: (sg: SgApi) => void;
 }
 
 export class GameCtrl implements BoardCtrl {
   game: Game;
   pov: Color;
-  chess: Chess = Chess.default();
-  lastMove?: [Key, Key];
+  shogi: Shogi = Shogi.default();
+  lastDests?: Key[];
   lastUpdateAt: number = Date.now();
-  ground?: CgApi;
+  ground?: SgApi;
   redrawInterval: ReturnType<typeof setInterval>;
 
   constructor(game: Game, readonly stream: Stream, private root: Ctrl) {
     this.game = game;
-    this.pov = this.game.black.id == this.root.auth.me?.id ? 'black' : 'white';
+    this.pov = this.game.gote.id == this.root.auth.me?.id ? 'gote' : 'sente';
     this.onUpdate();
     this.redrawInterval = setInterval(root.redraw, 100);
   }
@@ -38,47 +39,66 @@ export class GameCtrl implements BoardCtrl {
   };
 
   private onUpdate = () => {
-    const setup = this.game.initialFen == 'startpos' ? defaultSetup() : parseFen(this.game.initialFen).unwrap();
-    this.chess = Chess.fromSetup(setup).unwrap();
+    const sfen = this.game.initialSfen === 'startpos' ? initialSfen('standard') : this.game.initialSfen;
+    this.shogi = parseSfen('standard', sfen).unwrap();
     const moves = this.game.state.moves.split(' ').filter((m: string) => m);
-    moves.forEach((uci: string) => this.chess.play(parseUci(uci)!));
-    const lastMove = moves[moves.length - 1];
-    this.lastMove = lastMove && [lastMove.substr(0, 2) as Key, lastMove.substr(2, 2) as Key];
+    moves.forEach((uci: string) => this.shogi.play(parseUsi(uci)!));
+    const lm = moves[moves.length - 1];
+    this.lastDests = (lm ? (lm[1] === '*' ? [lm.slice(2)] : [lm[0] + lm[1], lm[2] + lm[3]]) : []) as Key[];
     this.lastUpdateAt = Date.now();
-    this.ground?.set(this.chessgroundConfig());
-    if (this.chess.turn == this.pov) this.ground?.playPremove();
+    this.ground?.set(this.shogigroundConfig());
+    if (this.shogi.turn == this.pov) this.ground?.playPremove();
   };
 
   timeOf = (color: Color) => this.game.state[`${color[0]}time`];
 
-  userMove = async (orig: Key, dest: Key) => {
+  userMove = async (orig: Key, dest: Key, promotion: Boolean) => {
     this.ground?.set({ turnColor: opposite(this.pov) });
-    await this.root.auth.fetchBody(`/api/board/game/${this.game.id}/move/${orig}${dest}`, { method: 'post' });
+    await this.root.auth.fetchBody(`/api/board/game/${this.game.id}/move/${orig}${dest}${promotion ? '+' : ''}`, {
+      method: 'POST',
+    });
+  };
+
+  userDrop = async (piece: Piece, key: Key) => {
+    const usi = makeUsi({ role: piece.role as Role, to: parseSquare(key) });
+    this.ground?.set({ turnColor: opposite(this.pov) });
+    await this.root.auth.fetchBody(`/api/board/game/${this.game.id}/move/${usi}`, {
+      method: 'POST',
+    });
   };
 
   resign = async () => {
-    await this.root.auth.fetchBody(`/api/board/game/${this.game.id}/resign`, { method: 'post' });
+    await this.root.auth.fetchBody(`/api/board/game/${this.game.id}/resign`, { method: 'POST' });
   };
 
   playing = () => this.game.state.status == 'started';
 
-  chessgroundConfig = () => ({
+  shogigroundConfig: () => Config = () => ({
     orientation: this.pov,
-    fen: makeFen(this.chess.toSetup()),
-    lastMove: this.lastMove,
-    turnColor: this.chess.turn,
-    check: !!this.chess.isCheck(),
+    sfen: { board: makeSfen(this.shogi) },
+    hands: {
+      inlined: true,
+    },
+    lastDests: this.lastDests,
+    turnColor: this.shogi.turn,
+    check: !!this.shogi.isCheck(),
     movable: {
       free: false,
       color: this.playing() ? this.pov : undefined,
-      dests: chessgroundDests(this.chess),
+      dests: shogigroundMoveDests(this.shogi),
+    },
+    droppable: {
+      free: false,
+      color: this.playing() ? this.pov : undefined,
+      dests: shogigroundDropDests(this.shogi),
     },
     events: {
       move: this.userMove,
+      drop: this.userDrop,
     },
   });
 
-  setGround = (cg: CgApi) => (this.ground = cg);
+  setGround = (sg: SgApi) => (this.ground = sg);
 
   static open = (root: Ctrl, id: string): Promise<GameCtrl> =>
     new Promise<GameCtrl>(async resolve => {

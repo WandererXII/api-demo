@@ -2,10 +2,10 @@ import { HttpClient, OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
 import { readStream } from './ndJsonStream';
 import { BASE_PATH } from './routing';
 
-export const lichessHost = 'https://lichess.org';
-// export const lichessHost = 'http://l.org';
+//export const lishogiHost = 'https://lishogi.org';
+export const lishogiHost = 'http://localhost:9663';
 export const scopes = ['board:play'];
-export const clientId = 'lichess-api-demo';
+export const clientId = 'lishogi-api-demo';
 export const clientUrl = `${location.protocol}//${location.host}${BASE_PATH || '/'}`;
 
 export interface Me {
@@ -17,8 +17,8 @@ export interface Me {
 
 export class Auth {
   oauth = new OAuth2AuthCodePKCE({
-    authorizationUrl: `${lichessHost}/oauth`,
-    tokenUrl: `${lichessHost}/api/token`,
+    authorizationUrl: `${lishogiHost}/oauth`,
+    tokenUrl: `${lishogiHost}/api/token`,
     clientId,
     scopes,
     redirectUrl: clientUrl,
@@ -49,14 +49,14 @@ export class Auth {
   }
 
   async logout() {
-    if (this.me) await this.me.httpClient(`${lichessHost}/api/token`, { method: 'DELETE' });
+    if (this.me) await this.me.httpClient(`${lishogiHost}/api/token`, { method: 'DELETE' });
     localStorage.clear();
     this.me = undefined;
   }
 
   private authenticate = async () => {
     const httpClient = this.oauth.decorateFetchHTTPClient(window.fetch);
-    const res = await httpClient(`${lichessHost}/api/account`);
+    const res = await httpClient(`${lishogiHost}/api/account`);
     const me = {
       ...(await res.json()),
       httpClient,
@@ -77,7 +77,7 @@ export class Auth {
   };
 
   private fetchResponse = async (path: string, config: any = {}) => {
-    const res = await (this.me?.httpClient || window.fetch)(`${lichessHost}${path}`, config);
+    const res = await (this.me?.httpClient || window.fetch)(`${lishogiHost}${path}`, config);
     if (res.error || !res.ok) {
       const err = `${res.error} ${res.status} ${res.statusText}`;
       alert(err);

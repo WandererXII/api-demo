@@ -1,4 +1,4 @@
-import { Chessground } from 'chessground';
+import { Shogiground } from 'shogiground';
 import { h } from 'snabbdom';
 import { Ctrl } from '../ctrl';
 import { Game, Renderer } from '../interfaces';
@@ -16,23 +16,15 @@ const userHome = (ctrl: Ctrl) => [
           attrs: { type: 'button' },
           on: { click: ctrl.playAi },
         },
-        'Play the Lichess AI'
+        'Play the Lishogi AI'
       ),
       h(
         'button.btn.btn-outline-primary.btn-lg',
         {
           attrs: { type: 'button' },
-          on: { click: () => ctrl.playMaia(10, 0) },
+          on: { click: () => ctrl.playRandom() },
         },
-        'Play a casual 10+0 game with the maia1 BOT'
-      ),
-      h(
-        'button.btn.btn-outline-primary.btn-lg',
-        {
-          attrs: { type: 'button' },
-          on: { click: () => ctrl.playPool(10, 0) },
-        },
-        'Play a rated 10+0 game with a random opponent'
+        'Play a casual game with a random BOT'
       ),
     ]),
     h('h2.mt-5', 'Games in progress'),
@@ -49,7 +41,7 @@ const renderGameWidget = (game: Game) =>
   h(
     `a.game-widget.text-decoration-none.game-widget--${game.id}`,
     {
-      attrs: href(`/game/${game.gameId}`),
+      attrs: href(`/game/${game.id}`),
     },
     [
       h('span.game-widget__opponent', [
@@ -57,20 +49,22 @@ const renderGameWidget = (game: Game) =>
         game.opponent.rating && h('span.game-widget__opponent__rating', game.opponent.rating),
       ]),
       h(
-        'span.game-widget__board.cg-wrap',
+        'span.game-widget__board.sg-wrap',
         {
           hook: {
             insert(vnode) {
               const el = vnode.elm as HTMLElement;
-              Chessground(el, {
-                fen: game.fen,
-                orientation: game.color,
-                lastMove: game.lastMove.match(/.{1,2}/g),
-                viewOnly: true,
-                movable: { free: false },
-                drawable: { visible: false },
-                coordinates: false,
-              });
+              Shogiground(
+                {
+                  sfen: { board: game.sfen },
+                  orientation: game.color,
+                  lastDests: game.lastDests.match(/.{1,2}/g),
+                  viewOnly: true,
+                  movable: { free: false },
+                  drawable: { visible: false },
+                },
+                { board: el }
+              );
             },
           },
         },
@@ -88,21 +82,21 @@ const anonHome = () => [
       {
         attrs: href('/login'),
       },
-      'Login with Lichess'
+      'Login with Lishogi'
     ),
   ]),
 ];
 
 const renderAbout = () =>
   h('div.about', [
-    h('p', 'This is an example for a fully client side OAuth app that uses various Lichess APIs.'),
+    h('p', 'This is an example for a fully client side OAuth app that uses various Lishogi APIs.'),
     h('ul', [
       h(
         'li',
         h(
           'a',
           {
-            attrs: { href: 'https://github.com/lichess-org/api-demo' },
+            attrs: { href: 'https://github.com/WandererXII/api-demo' },
           },
           'Source code of this demo'
         )
@@ -112,7 +106,9 @@ const renderAbout = () =>
         h(
           'a',
           {
-            attrs: { href: 'https://github.com/lichess-org/api-demo#lichess-oauth-app-demo' },
+            attrs: {
+              href: 'https://github.com/WandererXII/api-demo#lishogi-oauth-app-demo',
+            },
           },
           'README'
         )
@@ -122,9 +118,9 @@ const renderAbout = () =>
         h(
           'a',
           {
-            attrs: { href: 'https://lichess.org/api' },
+            attrs: { href: 'https://lishogi.org/api' },
           },
-          'Lichess.org API documentation'
+          'Lishogi.org API documentation'
         )
       ),
     ]),

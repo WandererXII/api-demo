@@ -10,7 +10,7 @@ export default args => ({
   output: {
     file: args['config-prod'] ? 'dist/index.min.js' : 'index.js',
     format: 'iife',
-    name: 'LichessDemo',
+    name: 'LishogiDemo',
     plugins: args['config-prod']
       ? [
           terser({

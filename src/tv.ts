@@ -1,17 +1,18 @@
-import { Chess, Color } from 'chessops';
+import { Shogi, Color } from 'shogiops';
 import { Ctrl } from './ctrl';
-import { Api as CgApi } from 'chessground/api';
+import { Api as SgApi } from 'shogiground/api';
 import { Stream } from './ndJsonStream';
-import { parseFen } from 'chessops/fen';
-import { Key } from 'chessground/types';
+import { parseSfen } from 'shogiops/sfen';
+import { Key } from 'shogiground/types';
 import { BoardCtrl } from './game';
+import { Config } from 'shogiground/config';
 
 interface TvGame {
   id: string;
   orientation: Color;
   players: [TvPlayer, TvPlayer];
-  fen: string;
-  lastMove?: string;
+  sfen: string;
+  lastDests?: string;
 }
 
 interface TvPlayer {
@@ -25,8 +26,8 @@ interface TvPlayer {
 }
 
 export default class TvCtrl implements BoardCtrl {
-  ground?: CgApi;
-  chess: Chess = Chess.default();
+  ground?: SgApi;
+  shogi: Shogi = Shogi.default();
   lastUpdateAt: number = Date.now();
   redrawInterval: ReturnType<typeof setInterval>;
   constructor(readonly stream: Stream, public game: TvGame, readonly root: Ctrl) {
@@ -59,30 +60,29 @@ export default class TvCtrl implements BoardCtrl {
           resolve(ctrl);
         }
       };
-      stream = await root.auth.openStream('/api/tv/feed', {}, handler);
+      stream = await root.auth.openStream('/tv/feed', {}, handler);
     });
 
-  chessgroundConfig = () => {
-    const chess = Chess.fromSetup(parseFen(this.game.fen).unwrap()).unwrap();
-    const lm = this.game.lastMove;
-    const lastMove = (lm ? (lm[1] === '@' ? [lm.slice(2)] : [lm[0] + lm[1], lm[2] + lm[3]]) : []) as Key[];
+  shogigroundConfig: () => Config = () => {
+    const shogi = parseSfen('standard', this.game.sfen).unwrap();
+    const lm = this.game.lastDests;
+    const lastDests = (lm ? (lm[1] === '@' ? [lm.slice(2)] : [lm[0] + lm[1], lm[2] + lm[3]]) : []) as Key[];
     return {
       orientation: this.game.orientation,
-      fen: this.game.fen,
-      lastMove,
-      turnColor: chess.turn,
-      check: !!chess.isCheck(),
+      sfen: { board: this.game.sfen },
+      lastDests,
+      turnColor: shogi.turn,
+      check: !!shogi.isCheck(),
       viewOnly: true,
       movable: { free: false },
       drawable: { visible: false },
-      coordinates: false,
     };
   };
 
-  setGround = (cg: CgApi) => (this.ground = cg);
+  setGround = (sg: SgApi) => (this.ground = sg);
 
   private onUpdate = () => {
-    this.chess = Chess.fromSetup(parseFen(this.game.fen).unwrap()).unwrap();
+    this.shogi = parseSfen('standard', this.game.sfen).unwrap();
     this.lastUpdateAt = Date.now();
   };
 
@@ -93,13 +93,13 @@ export default class TvCtrl implements BoardCtrl {
         this.onUpdate();
         this.root.redraw();
         break;
-      case 'fen':
-        this.game.fen = msg.d.fen;
-        this.game.lastMove = msg.d.lm;
-        this.player('white').seconds = msg.d.wc;
-        this.player('black').seconds = msg.d.bc;
+      case 'sfen':
+        this.game.sfen = msg.d.sfen;
+        this.game.lastDests = msg.d.lm;
+        this.player('sente').seconds = msg.d.wc;
+        this.player('gote').seconds = msg.d.bc;
         this.onUpdate();
-        this.ground?.set(this.chessgroundConfig());
+        this.ground?.set(this.shogigroundConfig());
         break;
     }
   };

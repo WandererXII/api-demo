@@ -19,7 +19,7 @@ export default class ChallengeCtrl {
     const stream = await root.auth.openStream(
       `/api/challenge/${config.username}`,
       {
-        method: 'post',
+        method: 'POST',
         body: formData({
           ...config,
           keepAliveStream: true,

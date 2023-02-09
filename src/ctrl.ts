@@ -25,6 +25,7 @@ export class Ctrl {
     if (this.auth.me) {
       await this.stream?.close();
       this.games.empty();
+      this.redraw();
       this.stream = await this.auth.openStream('/api/stream/event', {}, msg => {
         switch (msg.type) {
           case 'gameStart':
@@ -55,35 +56,30 @@ export class Ctrl {
     this.page = 'game';
     this.redraw();
     await this.auth.fetchBody('/api/challenge/ai', {
-      method: 'post',
+      method: 'POST',
       body: formData({
         level: 1,
-        'clock.limit': 60 * 3,
-        'clock.increment': 2,
+        'clock.limit': 60 * 10,
+        'clock.increment': 10,
+        'clock.byoyomi': 0,
+        'clock.periods': 0,
+        variant: 'standard',
+        color: 'sente',
       }),
     });
   };
 
-  playPool = async (minutes: number, increment: number) => {
-    this.seek = await SeekCtrl.make(
-      {
-        rated: true,
-        time: minutes,
-        increment,
-      },
-      this
-    );
-    this.page = 'seek';
-    this.redraw();
-  };
-
-  playMaia = async (minutes: number, increment: number) => {
+  playRandom = async () => {
     this.challenge = await ChallengeCtrl.make(
       {
-        username: 'maia1',
+        username: 'random',
         rated: false,
-        'clock.limit': minutes * 60,
-        'clock.increment': increment,
+        'clock.limit': 60 * 5,
+        'clock.increment': 2,
+        'clock.byoyomi': 0,
+        'clock.periods': 0,
+        variant: 'standard',
+        color: 'sente',
       },
       this
     );

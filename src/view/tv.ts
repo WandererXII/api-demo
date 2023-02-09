@@ -1,5 +1,5 @@
-import { Color } from 'chessground/types';
-import { opposite } from 'chessground/util';
+import { Color } from 'shogiground/types';
+import { opposite } from 'shogiground/util';
 import { h } from 'snabbdom';
 import TvCtrl from '../tv';
 import { Renderer } from '../interfaces';
@@ -27,7 +27,7 @@ const renderTvPlayer = (ctrl: TvCtrl, color: Color) => {
   const p = ctrl.player(color);
   const clock = clockContent(
     p.seconds && p.seconds * 1000,
-    color == ctrl.chess.turn ? ctrl.lastUpdateAt - Date.now() : 0
+    color == ctrl.shogi.turn ? ctrl.lastUpdateAt - Date.now() : 0
   );
   return renderPlayer(ctrl, color, clock, p.user.name, p.user.title, p.rating);
 };

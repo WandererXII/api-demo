@@ -18,7 +18,7 @@ const renderNavBar = (ctrl: Ctrl) =>
         {
           attrs: href('/'),
         },
-        'Lichess API Demo'
+        'Lishogi API Demo'
       ),
       h(
         'button.navbar-toggler',
@@ -97,6 +97,6 @@ const anonNav = () =>
       {
         attrs: href('/login'),
       },
-      'Login with Lichess'
+      'Login with Lishogi'
     )
   );
